@@ -1,0 +1,22 @@
+name: CI/CD
+on:
+  push:
+    branches: [main]
+jobs:
+  build-and-deploy:
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build image
+        run: docker build -t faiz792/devops-backend:${{ github.sha }} .
+
+      - name: Login & push
+        run: |
+          echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u faiz792 --password-stdin
+          docker push faiz792/devops-backend:${{ github.sha }}
+
+      - name: Deploy
+        run: |
+          kubectl set image deployment/backend backend=faiz792/devops-backend:${{ github.sha }} -n devops-challenge
+          kubectl rollout status deployment/backend -n devops-challenge
